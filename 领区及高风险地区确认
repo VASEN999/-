@@ -1,0 +1,293 @@
+import json
+
+# 省级和直辖市级别名称列表
+PROVINCES_AND_DIRECT_CITIES = [
+    "北京市", "天津市", "上海市", "重庆市",
+    "河北省", "山西省", "辽宁省", "吉林省", "黑龙江省",
+    "江苏省", "浙江省", "安徽省", "福建省", "江西省", "山东省",
+    "河南省", "湖北省", "湖南省", "广东省", "海南省",
+    "四川省", "贵州省", "云南省", "陕西省", "甘肃省",
+    "青海省", "台湾省", "内蒙古自治区", "广西壮族自治区",
+    "西藏自治区", "宁夏回族自治区", "新疆维吾尔自治区"
+]
+
+CONSULAR_DISTRICTS_JAPAN = {
+    "北京": [
+        "北京市", "天津市", "陕西省", "山西省", "甘肃省", "河南省", "河北省",
+        "湖北省", "湖南省", "青海省", "新疆维吾尔自治区", "宁夏回族自治区",
+        "西藏自治区", "内蒙古自治区"
+    ],
+    "上海": [
+        "上海市", "江苏省", "浙江省", "安徽省", "江西省"
+    ],
+    "广州": [
+        "广东省", "海南省", "福建省", "广西壮族自治区", "黑龙江省", "吉林省", "辽宁省"
+    ],
+    "重庆": [
+        "四川省", "重庆市", "贵州省", "云南省"
+    ],
+    "青岛": [
+        "山东省"
+    ],
+    "大连": [
+        "辽宁省"
+    ]
+}
+
+CONSULAR_DISTRICTS_KOREA = {
+    "广州领区": ["广东省", "广西壮族自治区", "海南省", "福建省"],
+    "武汉领区": ["湖北省", "湖南省", "河南省", "江西省"],
+    "北京领区": ["北京市", "天津市", "河北省", "山西省", "内蒙古自治区", "新疆维吾尔自治区", "西藏自治区", "青海省"],
+    "成都领区": ["重庆市", "四川省", "云南省", "贵州省"],
+    "上海领区": ["上海市", "安徽省", "江苏省", "浙江省"],
+    "西安领区": ["陕西省", "甘肃省", "宁夏回族自治区"],
+    "沈阳领区": ["辽宁省", "黑龙江省", "吉林省"],
+    "青岛领区": ["青岛市", "山东省"]
+}
+
+# 高风险省份及其高风险子地区（按领区分类）
+HIGH_RISK_REGIONS_JAPAN = {
+    "北京领区": {
+        "河南省": [
+        "洛阳", "信阳", "南阳", "安阳（滑县、内黄县、安阳市）", "周口（淮阳县）",
+        "濮阳（濮阳市、濮阳县、清丰县）", "漯河（召陵区）", "新乡"
+    ],
+    "河北省": [
+        "廊坊（文安县）", "石家庄（藁城区、无极县）", "沧州（沧县）",
+        "唐山（唐山市)", "衡水（故城县）", "保定（易县、清苑县）"
+    ],
+    "山东省": [
+        "青岛（莱西市）", "潍坊（青州市）", "日照", "临沂", "威海",
+        "济宁", "莱芜", "烟台（莱阳市）", "泰安（宁阳县）"
+    ],
+    "江西省": [
+        "南昌（南昌县）", "萍乡"
+    ],
+    "江苏省": [
+        "连云港（海安县、赣榆县、东海县）", "泰州（泰州市、姜堰市）",
+        "南通（如东县）"
+    ],
+    "黑龙江省": [
+        "哈尔滨（哈尔滨市、延寿县、方正县、五常市）",
+        "佳木斯（汤原县）", "牡丹江（海林市、宁安市）"
+    ],
+    "吉林省": [
+        "通化（辉南县、通化县、梅河口市）", "松原（前郭尔罗斯蒙古族自治县、乾安县）", 
+        "辽源（东丰县）", "四平（伊通满族族自治县）",
+        "吉林（磐石市、蛟东市、永吉县）", "延边朝鲜族自治州（和龙市、延吉市、安图县）"
+    ],
+    "辽宁省": [
+        "沈阳（苏家屯区）", "丹东（丹东市）", "铁岭", "抚顺（新抚区、新宾满族自治县、清源满族自治县）", 
+        "大连（中山区）", "鞍山（海城市）", "盘锦（大注县）"
+    ],
+    "福建省": [
+        "福州（长乐市、福清市、莆田市）"
+    ],
+    "浙江省": [
+        "丽水（庆元县）"
+    ],
+    "天津市": [
+        "津南区", "汉沽区", "滨海新区"
+    ],
+    "湖南省": [
+        "郴州"
+    ],
+    "陕西省": [
+        "渭南"
+    ],
+    "湖北省": [
+        "孝感"
+    ],
+    "四川省": [
+        "广元"
+    ]
+
+    },
+    "上海领区": {
+        "江苏省": [
+            "南通", "盐城", "海门", "海安", "如东", 
+            "徐州(邳州)", "常州(金坛)", "连云港", "泰州"
+        ],
+        "浙江省": [
+            "舟山", "温州(苍南)", "金华(浦江)", "丽水(庆元县)", "潮州(长兴县)"
+        ],
+        "安徽省": [
+            "蚌埠", "阜阳"
+        ],
+        "江西省": [
+            "南昌（南昌县）", "萍乡"
+        ],
+        "新疆维吾尔自治区": "ALL",
+        "辽宁省": "ALL",
+        "吉林省": "ALL",
+        "黑龙江省": "ALL",
+        "河南省": "ALL",
+        "河北省": "ALL",
+        "湖南省": "ALL",
+        "湖北省": "ALL",
+        "福建省": "ALL",
+        "山东省": "ALL"
+    }
+}
+
+def validate_province(province):
+    return province in PROVINCES_AND_DIRECT_CITIES
+
+def determine_district(country, residence):
+    if not residence:
+        return "未知领区", "居住地缺失"
+    
+    if country == "日本":
+        for district, regions in CONSULAR_DISTRICTS_JAPAN.items():
+            if residence in regions:
+                return f"{district}领区", ""
+        return "未知领区", "无法匹配领区"
+    
+    elif country == "韩国":
+        for district, regions in CONSULAR_DISTRICTS_KOREA.items():
+            if residence in regions:
+                return district, ""
+        return "未知领区", "无法匹配领区"
+    
+    else:
+        return "未知领区", "不支持的国家或国家未知"
+
+def get_high_risk_regions(country, district, household_province):
+    if country != "日本":
+        return []
+    
+    # 获取领区下的高风险子地区
+    high_risk_dict = HIGH_RISK_REGIONS_JAPAN.get(district, {})
+    if not high_risk_dict:
+        return []
+    
+    # 获取省份对应的高风险子地区
+    high_risk = high_risk_dict.get(household_province, [])
+    
+    if high_risk == "ALL":
+        return ["整个省份"]
+    else:
+        return high_risk
+
+def confirm_high_risk_subregion(high_risk_subregions, user_subregion):
+    if not high_risk_subregions:
+        return {
+            "is_high_risk": False,
+            "high_risk_details": []
+        }
+    
+    if "整个省份" in high_risk_subregions:
+        # 如果整个省份都是高风险
+        return {
+            "is_high_risk": True,
+            "high_risk_details": ["整个省份"]
+        }
+    
+    if user_subregion in high_risk_subregions:
+        return {
+            "is_high_risk": True,
+            "high_risk_details": [user_subregion]
+        }
+    else:
+        return {
+            "is_high_risk": False,
+            "high_risk_details": []
+        }
+
+def generate_high_risk_prompt(high_risk_subregions, household_province):
+    if not high_risk_subregions:
+        return ""
+    
+    if "整个省份" in high_risk_subregions:
+        return f"用户的户籍所在省份 {household_province} 属于高风险省份，需要进行风险评估。"
+    
+    subregions_str = "、".join(high_risk_subregions)
+    return f"用户的户籍所在省份 {household_province} 包含高风险地区：{subregions_str}，请确认用户的具体户籍子地区。"
+
+def high_risk_prompt_generator(high_risk_subregions, household_province):
+    prompt = generate_high_risk_prompt(high_risk_subregions, household_province)
+    return prompt
+
+async def main(args):
+    params = args.params
+    
+    country = params.get('country', '').strip()
+    residence = params.get('residence', '').strip()
+    household = params.get('household', '').strip()
+    
+    # 验证 residence 和 household
+    if residence and not validate_province(residence):
+        district = "未知领区"
+        district_sta = "未知"
+        district_rsn = "居住地名称无效或不在省级行政单位范围内"
+    else:
+        # 1. 确定领区
+        district, district_reason = determine_district(country, residence)
+        if district == "未知领区":
+            district_sta = "未知"
+            district_rsn = district_reason if district_reason else "居住地信息不足"
+        else:
+            district_sta = "已确定"
+            district_rsn = ""
+    
+    # 2. 判断是否需要居住确认材料
+    # 条件：需要户籍信息和有效领区
+    if household and not validate_province(household):
+        res_need = "未知"
+        res_need_sta = "未知"
+        res_need_rsn = "户籍名称无效或不在省级行政单位范围内"
+    else:
+        if not household:
+            # 无户籍信息，无法确定是否需要居住材料
+            res_need = "未知"
+            res_need_sta = "未知"
+            res_need_rsn = "户籍信息缺失"
+        else:
+            if district == "未知领区":
+                # 领区未知，无法判断需要材料
+                res_need = "未知"
+                res_need_sta = "未知"
+                res_need_rsn = "领区未知"
+            else:
+                # 领区已确定，检查户籍所在省级区域是否在领区内
+                if country == "日本":
+                    district_key = district.replace("领区", "")
+                    district_regions = CONSULAR_DISTRICTS_JAPAN.get(district_key, [])
+                elif country == "韩国":
+                    district_regions = CONSULAR_DISTRICTS_KOREA.get(district, [])
+                else:
+                    district_regions = []
+                
+                if household in district_regions:
+                    res_need = "无需居住确认材料"
+                    res_need_sta = "已确定"
+                    res_need_rsn = ""
+                else:
+                    res_need = "需要居住确认材料"
+                    res_need_sta = "已确定"
+                    res_need_rsn = ""
+    
+    # 3. 获取高风险子地区列表（仅适用于日本签证）
+    if country == "日本" and household and district in HIGH_RISK_REGIONS_JAPAN:
+        high_risk_subregions = get_high_risk_regions(country, district, household)
+    else:
+        high_risk_subregions = []
+    
+    # 4. 确认是否为高风险户籍
+    # 由于用户输入只有三个变量，无法直接获取具体子地区，因此假设需要进一步确认
+    # 下游节点将根据高_risk_subregions 提供具体子地区
+    # 生成高风险提示词
+    high_risk_prompt = generate_high_risk_prompt(high_risk_subregions, household)
+    
+    ret = {
+        "country": country,
+        "district": district if 'district' in locals() else "未知领区",
+        "district_sta": district_sta if 'district_sta' in locals() else "未知",
+        "district_rsn": district_rsn if 'district_rsn' in locals() else "未知原因",
+        "res_need": res_need,
+        "res_need_sta": res_need_sta,
+        "res_need_rsn": res_need_rsn,
+        "high_risk": high_risk_subregions,
+        "high_risk_prompt": high_risk_prompt  # 作为提示词使用
+    }
+    return ret
